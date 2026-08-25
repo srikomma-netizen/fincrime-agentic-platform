@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>FinCrime Case Triage Console — Live Demo</title>
+<style>
+  :root {
+    --bg: #0f1420; --panel: #172033; --panel2: #1e293f; --line: #2b3654;
+    --text: #e6ebf5; --muted: #97a3bd; --accent: #6c8cff;
+    --green: #35c78a; --amber: #f0b429; --red: #f0616d;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.5 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+  header { padding: 18px 24px; border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; gap: 12px; background: var(--panel); flex-wrap: wrap; }
+  header .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--accent); }
+  header h1 { font-size: 17px; margin: 0; font-weight: 600; }
+  header .sub { color: var(--muted); font-size: 13px; margin-left: auto; }
+  .banner { background: rgba(108,140,255,.10); border-bottom: 1px solid var(--line);
+    color: var(--muted); font-size: 13px; padding: 8px 24px; }
+  .banner a { color: var(--accent); }
+  .wrap { display: grid; grid-template-columns: 380px 1fr; gap: 20px; padding: 20px; max-width: 1200px; margin: 0 auto; }
+  @media (max-width: 860px) { .wrap { grid-template-columns: 1fr; } }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px; }
+  .card h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 14px; }
+  label { display: block; font-size: 12px; color: var(--muted); margin: 10px 0 4px; }
+  input, select { width: 100%; padding: 8px 10px; background: var(--panel2); color: var(--text);
+    border: 1px solid var(--line); border-radius: 8px; font-size: 14px; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .check { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+  .check input { width: auto; }
+  .btns { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+  button { border: 1px solid var(--line); background: var(--panel2); color: var(--text);
+    padding: 9px 14px; border-radius: 8px; cursor: pointer; font-size: 13px; }
+  button:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; flex: 1; }
+  .sample { font-size: 12px; }
+  .empty { color: var(--muted); text-align: center; padding: 60px 20px; }
+  .scorebar { display: flex; align-items: center; gap: 18px; margin-bottom: 16px; }
+  .gauge { width: 92px; height: 92px; border-radius: 50%; display: grid; place-items: center;
+    font-size: 22px; font-weight: 700; flex-shrink: 0; }
+  .badge { display: inline-block; padding: 4px 12px; border-radius: 999px; font-weight: 700; font-size: 13px; letter-spacing: .04em; }
+  .lvl-low { background: rgba(53,199,138,.15); color: var(--green); }
+  .lvl-medium { background: rgba(240,180,41,.15); color: var(--amber); }
+  .lvl-high { background: rgba(240,97,109,.15); color: var(--red); }
+  .g-low { background: conic-gradient(var(--green) var(--p), var(--panel2) 0); }
+  .g-medium { background: conic-gradient(var(--amber) var(--p), var(--panel2) 0); }
+  .g-high { background: conic-gradient(var(--red) var(--p), var(--panel2) 0); }
+  .gauge span { background: var(--panel); width: 72px; height: 72px; border-radius: 50%; display: grid; place-items: center; }
+  .meta { color: var(--muted); font-size: 13px; } .meta b { color: var(--text); }
+  .human { margin: 14px 0; padding: 12px 14px; border-radius: 10px; border-left: 4px solid var(--red);
+    background: rgba(240,97,109,.10); font-size: 14px; }
+  .human.ok { border-left-color: var(--green); background: rgba(53,199,138,.10); }
+  .sect { margin-top: 18px; } .sect h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 0 0 8px; }
+  ul { margin: 0; padding-left: 18px; } li { margin: 4px 0; }
+  .pill { display: inline-block; background: var(--panel2); border: 1px solid var(--line);
+    padding: 3px 10px; border-radius: 999px; font-size: 12px; margin: 3px 4px 0 0; }
+  .timeline { list-style: none; padding: 0; }
+  .timeline li { position: relative; padding: 4px 0 4px 20px; font-size: 13px; color: var(--muted); }
+  .timeline li::before { content: ""; position: absolute; left: 4px; top: 11px; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+  code { background: var(--panel2); padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="dot"></div>
+  <h1>Healthcare FinCrime — Case Triage Console</h1>
+  <div class="sub">agentic AI · risk scoring · RAG · human-in-the-loop</div>
+</header>
+<div class="banner">
+  Live browser demo (runs entirely client-side). The full server-side pipeline —
+  LangGraph agents, trained ML models, real RAG — lives in the
+  <a href="https://github.com/srikomma-netizen/fincrime-agentic-platform">GitHub repo</a>.
+</div>
+
+<div class="wrap">
+  <div class="card">
+    <h2>Claim under review</h2>
+    <div class="btns" style="margin-top:0">
+      <button class="sample" type="button" onclick="loadSample('low')">Load low-risk sample</button>
+      <button class="sample" type="button" onclick="loadSample('high')">Load high-risk sample</button>
+    </div>
+    <label>Claim ID</label>
+    <input id="claim_id" value="CLM-1002" />
+    <div class="row">
+      <div><label>Member name</label><input id="member_name" value="Sam Chen" /></div>
+      <div><label>Member SSN</label><input id="member_ssn" value="987-65-4321" /></div>
+    </div>
+    <div class="row">
+      <div><label>Provider</label><input id="provider_name" value="Chen Clinic" /></div>
+      <div><label>Procedure code</label><input id="procedure_code" value="27447" /></div>
+    </div>
+    <div class="row">
+      <div><label>Claim amount ($)</label><input id="amount" type="number" value="48500" /></div>
+      <div><label>Provider average ($)</label><input id="avg_provider_amount" type="number" value="2200" /></div>
+    </div>
+    <div class="row">
+      <div><label>Prior claims (30d)</label><input id="prior_claims_30d" type="number" value="7" /></div>
+      <div><label>Place of service</label>
+        <select id="place_of_service">
+          <option>office</option><option>hospital</option>
+          <option selected>home</option><option>telehealth</option>
+        </select></div>
+    </div>
+    <label>Reviewer role</label>
+    <select id="role"><option value="analyst">Analyst</option>
+      <option value="senior_investigator" selected>Senior investigator</option></select>
+    <div class="check"><input type="checkbox" id="duplicate_flag" checked />
+      <label style="margin:0">Duplicate-claim indicator</label></div>
+    <div class="btns"><button class="primary" type="button" onclick="runTriage()">Run triage</button></div>
+  </div>
+
+  <div class="card">
+    <h2>Triage result</h2>
+    <div id="result">
+      <div class="empty">Enter a claim (or load a sample) and press <b>Run triage</b>.<br/>
+        The pipeline de-identifies it, scores risk, cites policy, and routes it.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SAMPLES = {
+  low:  { claim_id:"CLM-1001", member_name:"Jordan Rivera", member_ssn:"123-45-6789",
+    provider_name:"Rivera Clinic", procedure_code:"99213", amount:180,
+    avg_provider_amount:200, prior_claims_30d:1, place_of_service:"office", duplicate_flag:false, role:"analyst" },
+  high: { claim_id:"CLM-1002", member_name:"Sam Chen", member_ssn:"987-65-4321",
+    provider_name:"Chen Clinic", procedure_code:"27447", amount:48500,
+    avg_provider_amount:2200, prior_claims_30d:7, place_of_service:"home", duplicate_flag:true, role:"senior_investigator" },
+};
+const POLICIES = {
+  "PAY-INT-001": ["Payment Integrity & FWA", "claims over ten thousand require analyst review amounts over three times the provider average are statistical outliers flagged for anomaly review high dollar"],
+  "SIU-ESC-002": ["SIU Escalation", "high risk cases and prior confirmed fraud vendors escalate to the special investigations unit request a temporary payment hold"],
+  "VEN-RSK-004": ["Vendor Risk Controls", "repeated small payments below review thresholds structuring high risk vendor prior confirmed fraud"],
+  "SEC-PHI-003": ["PHI/PII Handling", "mask direct identifiers before sharing with any model or tool re identification limited to senior investigators"],
+};
+const ACCESS = { "PAY-INT-001":"all", "SIU-ESC-002":"analyst", "VEN-RSK-004":"all", "SEC-PHI-003":"restricted" };
+const ROLE_ACCESS = { analyst:["all","analyst"], senior_investigator:["all","analyst","restricted"] };
+
+function loadSample(kind){ const s=SAMPLES[kind];
+  for(const k in s){ const el=document.getElementById(k); if(!el)continue;
+    if(el.type==="checkbox") el.checked=s[k]; else el.value=s[k]; } }
+
+function hashToken(kind, val){ let h=0; for(let i=0;i<val.length;i++){ h=(h*31+val.charCodeAt(i))>>>0; }
+  return "["+kind+"_"+h.toString(16).toUpperCase().padStart(8,"0").slice(0,8)+"]"; }
+
+function scoreRisk(c){ let s=0; const f=[];
+  const ratio = c.avg_provider_amount ? c.amount/c.avg_provider_amount : 1;
+  if(ratio>=3){ s+=0.45; f.push("amount is "+ratio.toFixed(1)+"x provider average"); }
+  if(c.amount>=10000){ s+=0.25; f.push("high-dollar claim (>= $10k)"); }
+  if(c.duplicate_flag){ s+=0.20; f.push("duplicate-claim indicator"); }
+  if(c.prior_claims_30d>=5){ s+=0.10; f.push(c.prior_claims_30d+" prior claims in 30 days"); }
+  if(c.place_of_service==="home"){ s+=0.05; f.push("unusual place of service (home)"); }
+  return { score: Math.min(s,1), factors: f.length?f:["no elevated risk signals"] }; }
+
+function levelFor(s){ return s<=0.35?"low":(s>=0.70?"high":"medium"); }
+
+function retrievePolicies(factors, level, role){
+  const allowed = ROLE_ACCESS[role]||["all"];
+  const q = new Set((factors.join(" ")+" "+level).toLowerCase().match(/[a-z]+/g)||[]);
+  const hits=[];
+  for(const pid in POLICIES){
+    if(!allowed.includes(ACCESS[pid])) continue;
+    const words = new Set((POLICIES[pid][0]+" "+POLICIES[pid][1]).toLowerCase().match(/[a-z]+/g)||[]);
+    let overlap=0; q.forEach(w=>{ if(words.has(w)) overlap++; });
+    if(level==="high" && pid==="SIU-ESC-002") overlap+=5;
+    if(overlap>=2) hits.push({pid, title:POLICIES[pid][0], score:overlap});
+  }
+  return hits.sort((a,b)=>b.score-a.score).slice(0,3);
+}
+
+function plan(level){
+  if(level==="low")  return ["auto_clear", false, "", ["Auto-clear and record decision in case log."]];
+  if(level==="medium") return ["analyst_review", false, "",
+    ["Assign to fraud-analyst queue for standard review.","Request supporting documentation if amount is unverified."]];
+  return ["siu_escalation", true, "High-risk case requires senior-investigator approval before action.",
+    ["Escalate to the Special Investigations Unit (SIU).","Place a temporary payment hold pending investigation.","Cross-check vendor against prior confirmed-fraud cases."]];
+}
+
+function readClaim(){ const v=id=>document.getElementById(id).value; const n=id=>parseFloat(v(id))||0;
+  return { claim_id:v("claim_id"), member_name:v("member_name"), member_ssn:v("member_ssn"),
+    provider_name:v("provider_name"), procedure_code:v("procedure_code"), amount:n("amount"),
+    avg_provider_amount:n("avg_provider_amount"), prior_claims_30d:parseInt(v("prior_claims_30d"))||0,
+    place_of_service:v("place_of_service"), duplicate_flag:document.getElementById("duplicate_flag").checked,
+    role:v("role") }; }
+
+function runTriage(){
+  const c = readClaim();
+  const audit = [];
+  const safeName = hashToken("NAME", c.member_name), safeSsn = hashToken("SSN", c.member_ssn);
+  audit.push("deidentify_agent: masked name -> "+safeName+", ssn -> "+safeSsn);
+  const { score, factors } = scoreRisk(c);
+  const level = levelFor(score);
+  audit.push("risk_agent: score "+score.toFixed(2)+" -> "+level);
+  const cites = retrievePolicies(factors, level, c.role);
+  audit.push("policy_agent: retrieved "+cites.length+" policy passage(s) for role "+c.role);
+  const [route, human, prompt, actions] = plan(level);
+  audit.push("planner_agent: route "+route);
+  if(human) audit.push("hitl: paused for human-in-the-loop approval");
+
+  const caseId = "CASE-"+Math.random().toString(16).slice(2,12).toUpperCase();
+  const pct = Math.round(score*100);
+  const li = a => a.map(x=>`<li>${x}</li>`).join("");
+  const pills = a => a.map(x=>`<span class="pill">${x}</span>`).join("") || '<span class="meta">none allowed for this role</span>';
+  const banner = human
+    ? `<div class="human"><b>&#9208; Human review required.</b> ${prompt}</div>`
+    : `<div class="human ok"><b>&#10003; No human needed.</b> Handled automatically.</div>`;
+
+  document.getElementById("result").innerHTML = `
+    <div class="scorebar">
+      <div class="gauge g-${level}" style="--p:${pct}%"><span>${pct}</span></div>
+      <div><span class="badge lvl-${level}">${level.toUpperCase()} RISK</span>
+        <div class="meta" style="margin-top:8px">
+          Case <b>${caseId}</b> · claim <b>${c.claim_id}</b><br/>
+          route: <b>${route}</b> · status: <b>${human?"awaiting_human":(level==="low"?"auto_cleared":"completed")}</b><br/>
+          de-identified: <code>${safeName}</code> <code>${safeSsn}</code>
+        </div></div>
+    </div>
+    ${banner}
+    <div class="sect"><h3>Why (supporting evidence)</h3><ul>${li(factors)}</ul></div>
+    <div class="sect"><h3>Recommended actions</h3><ul>${li(actions)}</ul></div>
+    <div class="sect"><h3>Policy citations (RAG · role-filtered)</h3>${pills(cites.map(c=>c.pid+" — "+c.title))}</div>
+    <div class="sect"><h3>Audit trail</h3><ul class="timeline">${li(audit)}</ul></div>`;
+}
+</script>
+</body>
+</html>
