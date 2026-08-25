@@ -1,5 +1,7 @@
 # Healthcare FinCrime Agentic Platform
 
+[![CI](https://github.com/srikomma-netizen/fincrime-agentic-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/srikomma-netizen/fincrime-agentic-platform/actions/workflows/ci.yml)
+
 An **agentic AI + analytics platform to strengthen financial-crimes and fraud
 controls across healthcare payments and vendor transactions** — it detects
 anomalous claims and payments, retrieves approved compliance policies, generates
