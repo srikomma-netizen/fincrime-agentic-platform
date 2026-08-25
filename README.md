@@ -157,6 +157,12 @@ PYTHONPATH=src pytest -q
   and regulatory review.
 - Risk thresholds (`RISK_LOW_MAX`, `RISK_HIGH_MIN`) are configurable via `.env`.
 
+## See also
+
+**[fincrime-mini](https://github.com/srikomma-netizen/fincrime-mini)** — a tiny,
+single-file, zero-dependency version of the same idea, small enough to read in
+one sitting. A good starting point before diving into this full platform.
+
 ## Disclaimer
 
 "Baxter Health" is referenced only as the résumé project this repo re-creates.
