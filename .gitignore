@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+artifacts/*.joblib
+artifacts/vector_index/
+data/synthetic/*.json
+.pytest_cache/
+*.egg-info/

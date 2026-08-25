@@ -1,0 +1,13 @@
+services:
+  fincrime-api:
+    build: .
+    image: fincrime-agentic-platform:latest
+    ports:
+      - "8000:8000"
+    environment:
+      LLM_PROVIDER: ${LLM_PROVIDER:-mock}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ENABLE_PII_MASKING: "true"
+      RAG_BACKEND: auto
+    restart: unless-stopped

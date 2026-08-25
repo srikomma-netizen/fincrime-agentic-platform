@@ -1,0 +1,30 @@
+# ---- Core API ----
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+pydantic==2.9.2
+pydantic-settings==2.5.2
+python-multipart==0.0.12
+
+# ---- ML / analytics ----
+scikit-learn==1.5.2
+xgboost==2.1.1
+numpy==2.1.1
+pandas==2.2.2
+joblib==1.4.2
+
+# ---- Agentic AI (optional at runtime; app degrades gracefully if absent) ----
+langgraph==0.2.28
+langchain==0.3.1
+langchain-core==0.3.6
+
+# ---- RAG (optional; TF-IDF fallback used if these are absent) ----
+faiss-cpu==1.8.0.post1
+sentence-transformers==3.1.1
+
+# ---- LLM providers (optional; deterministic mock used if no key) ----
+anthropic==0.34.2
+openai==1.47.0
+
+# ---- Dev / test ----
+pytest==8.3.3
+httpx==0.27.2
