@@ -2,6 +2,9 @@
 
 [![CI](https://github.com/srikomma-netizen/fincrime-agentic-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/srikomma-netizen/fincrime-agentic-platform/actions/workflows/ci.yml)
 
+**▶ Live demo:** https://srikomma-netizen.github.io/fincrime-agentic-platform/ — an
+interactive, in-browser version of the Case Triage Console (no install needed).
+
 An **agentic AI + analytics platform to strengthen financial-crimes and fraud
 controls across healthcare payments and vendor transactions** — it detects
 anomalous claims and payments, retrieves approved compliance policies, generates
