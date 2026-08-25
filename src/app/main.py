@@ -11,7 +11,10 @@ from __future__ import annotations
 
 from functools import lru_cache
 
+from pathlib import Path
+
 from fastapi import Body, FastAPI, HTTPException
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 from .config import get_settings
@@ -23,6 +26,14 @@ app = FastAPI(
     description="Agentic AI + analytics for financial-crimes & fraud controls "
                 "across healthcare payments and vendor transactions.",
 )
+
+_WEB_DIR = Path(__file__).resolve().parents[2] / "web"
+
+
+@app.get("/", include_in_schema=False)
+def index() -> FileResponse:
+    """Serve the Case Triage Console UI."""
+    return FileResponse(_WEB_DIR / "index.html")
 
 
 @lru_cache

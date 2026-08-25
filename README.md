@@ -92,12 +92,16 @@ python scripts/demo.py
 > verified on a locked-down Windows host where Application Control blocks scipy's
 > compiled extensions (so scikit-learn/xgboost can't load at all).
 
-### Run the API
+### Run the API + web UI
 
 ```bash
 uvicorn app.main:app --app-dir src --reload --port 8000
-# docs at http://localhost:8000/docs
 ```
+
+- **Case Triage Console (web UI):** http://localhost:8000/ — enter or load a
+  claim, press **Run triage**, and watch the agent pipeline score risk, cite
+  policy, and route the case (with a human-review pause on high-risk cases).
+- **Interactive API docs:** http://localhost:8000/docs
 
 ### Example call
 

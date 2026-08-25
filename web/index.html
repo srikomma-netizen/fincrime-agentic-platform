@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>FinCrime Case Triage Console</title>
+<style>
+  :root {
+    --bg: #0f1420; --panel: #172033; --panel2: #1e293f; --line: #2b3654;
+    --text: #e6ebf5; --muted: #97a3bd; --accent: #6c8cff;
+    --green: #35c78a; --amber: #f0b429; --red: #f0616d;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.5 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  }
+  header {
+    padding: 18px 24px; border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; gap: 12px; background: var(--panel);
+  }
+  header .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--accent); }
+  header h1 { font-size: 17px; margin: 0; font-weight: 600; }
+  header .sub { color: var(--muted); font-size: 13px; margin-left: auto; }
+  .wrap { display: grid; grid-template-columns: 380px 1fr; gap: 20px; padding: 20px; max-width: 1200px; margin: 0 auto; }
+  @media (max-width: 860px) { .wrap { grid-template-columns: 1fr; } }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px; }
+  .card h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 14px; }
+  label { display: block; font-size: 12px; color: var(--muted); margin: 10px 0 4px; }
+  input, select {
+    width: 100%; padding: 8px 10px; background: var(--panel2); color: var(--text);
+    border: 1px solid var(--line); border-radius: 8px; font-size: 14px;
+  }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .check { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+  .check input { width: auto; }
+  .btns { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+  button {
+    border: 1px solid var(--line); background: var(--panel2); color: var(--text);
+    padding: 9px 14px; border-radius: 8px; cursor: pointer; font-size: 13px;
+  }
+  button:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; flex: 1; }
+  .sample { font-size: 12px; }
+  /* results */
+  .empty { color: var(--muted); text-align: center; padding: 60px 20px; }
+  .scorebar { display: flex; align-items: center; gap: 18px; margin-bottom: 16px; }
+  .gauge { width: 92px; height: 92px; border-radius: 50%; display: grid; place-items: center;
+    font-size: 22px; font-weight: 700; flex-shrink: 0; }
+  .badge { display: inline-block; padding: 4px 12px; border-radius: 999px; font-weight: 700;
+    font-size: 13px; letter-spacing: .04em; }
+  .lvl-low { background: rgba(53,199,138,.15); color: var(--green); }
+  .lvl-medium { background: rgba(240,180,41,.15); color: var(--amber); }
+  .lvl-high { background: rgba(240,97,109,.15); color: var(--red); }
+  .g-low { background: conic-gradient(var(--green) var(--p), var(--panel2) 0); }
+  .g-medium { background: conic-gradient(var(--amber) var(--p), var(--panel2) 0); }
+  .g-high { background: conic-gradient(var(--red) var(--p), var(--panel2) 0); }
+  .gauge span { background: var(--panel); width: 72px; height: 72px; border-radius: 50%; display: grid; place-items: center; }
+  .meta { color: var(--muted); font-size: 13px; }
+  .meta b { color: var(--text); }
+  .human { margin: 14px 0; padding: 12px 14px; border-radius: 10px; border-left: 4px solid var(--red);
+    background: rgba(240,97,109,.10); font-size: 14px; }
+  .human.ok { border-left-color: var(--green); background: rgba(53,199,138,.10); }
+  .sect { margin-top: 18px; }
+  .sect h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 0 0 8px; }
+  ul { margin: 0; padding-left: 18px; } li { margin: 4px 0; }
+  .pill { display: inline-block; background: var(--panel2); border: 1px solid var(--line);
+    padding: 3px 10px; border-radius: 999px; font-size: 12px; margin: 3px 4px 0 0; }
+  .timeline { list-style: none; padding: 0; }
+  .timeline li { position: relative; padding: 4px 0 4px 20px; font-size: 13px; color: var(--muted); }
+  .timeline li::before { content: ""; position: absolute; left: 4px; top: 11px; width: 7px; height: 7px;
+    border-radius: 50%; background: var(--accent); }
+  .err { color: var(--red); font-size: 13px; margin-top: 10px; }
+  .loading { color: var(--muted); text-align: center; padding: 50px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="dot"></div>
+  <h1>Healthcare FinCrime — Case Triage Console</h1>
+  <div class="sub">agentic AI · risk scoring · RAG · human-in-the-loop</div>
+</header>
+
+<div class="wrap">
+  <!-- INPUT -->
+  <div class="card">
+    <h2>Claim under review</h2>
+    <div class="btns" style="margin-top:0">
+      <button class="sample" type="button" onclick="loadSample('low')">Load low-risk sample</button>
+      <button class="sample" type="button" onclick="loadSample('high')">Load high-risk sample</button>
+    </div>
+
+    <label>Claim ID</label>
+    <input id="claim_id" value="CLM-1002" />
+    <div class="row">
+      <div><label>Member name</label><input id="member_name" value="Sam Chen" /></div>
+      <div><label>Member SSN</label><input id="member_ssn" value="987-65-4321" /></div>
+    </div>
+    <div class="row">
+      <div><label>Provider</label><input id="provider_name" value="Chen Clinic" /></div>
+      <div><label>Procedure code</label><input id="procedure_code" value="27447" /></div>
+    </div>
+    <div class="row">
+      <div><label>Claim amount ($)</label><input id="amount" type="number" value="48500" /></div>
+      <div><label>Provider average ($)</label><input id="avg_provider_amount" type="number" value="2200" /></div>
+    </div>
+    <div class="row">
+      <div><label>Prior claims (30d)</label><input id="prior_claims_30d" type="number" value="7" /></div>
+      <div><label>Place of service</label>
+        <select id="place_of_service">
+          <option>office</option><option>hospital</option>
+          <option selected>home</option><option>telehealth</option>
+        </select>
+      </div>
+    </div>
+    <label>Reviewer role</label>
+    <select id="role">
+      <option value="analyst">Analyst</option>
+      <option value="senior_investigator" selected>Senior investigator</option>
+      <option value="compliance">Compliance</option>
+    </select>
+    <div class="check">
+      <input type="checkbox" id="duplicate_flag" checked />
+      <label style="margin:0">Duplicate-claim indicator</label>
+    </div>
+
+    <div class="btns">
+      <button class="primary" type="button" onclick="runTriage()">Run triage</button>
+    </div>
+    <div id="err" class="err"></div>
+  </div>
+
+  <!-- OUTPUT -->
+  <div class="card">
+    <h2>Triage result</h2>
+    <div id="result">
+      <div class="empty">Enter a claim (or load a sample) and press <b>Run triage</b>.<br/>
+        The agent pipeline will de-identify it, score risk, cite policy, and route it.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SAMPLES = {
+  low: { claim_id:"CLM-1001", member_name:"Jordan Rivera", member_ssn:"123-45-6789",
+    provider_name:"Rivera Clinic", procedure_code:"99213", amount:180,
+    avg_provider_amount:200, prior_claims_30d:1, place_of_service:"office",
+    duplicate_flag:false, role:"analyst" },
+  high: { claim_id:"CLM-1002", member_name:"Sam Chen", member_ssn:"987-65-4321",
+    provider_name:"Chen Clinic", procedure_code:"27447", amount:48500,
+    avg_provider_amount:2200, prior_claims_30d:7, place_of_service:"home",
+    duplicate_flag:true, role:"senior_investigator" },
+};
+
+function loadSample(kind) {
+  const s = SAMPLES[kind];
+  for (const k in s) {
+    const el = document.getElementById(k);
+    if (!el) continue;
+    if (el.type === "checkbox") el.checked = s[k]; else el.value = s[k];
+  }
+  document.getElementById("err").textContent = "";
+}
+
+function buildClaim() {
+  const val = id => document.getElementById(id).value;
+  const num = id => parseFloat(document.getElementById(id).value) || 0;
+  return {
+    role: val("role"),
+    claim: {
+      claim_id: val("claim_id"),
+      member_id: "MBR-" + (val("claim_id") || "X"),
+      member_name: val("member_name"),
+      member_ssn: val("member_ssn"),
+      provider_id: "PROV-" + val("procedure_code"),
+      provider_name: val("provider_name"),
+      vendor_id: "VEND-1000",
+      amount: num("amount"),
+      avg_provider_amount: num("avg_provider_amount"),
+      procedure_code: val("procedure_code"),
+      diagnosis_code: "I10",
+      claim_date: "2026-08-25",
+      place_of_service: val("place_of_service"),
+      prior_claims_30d: parseInt(document.getElementById("prior_claims_30d").value) || 0,
+      duplicate_flag: document.getElementById("duplicate_flag").checked,
+    }
+  };
+}
+
+async function runTriage() {
+  document.getElementById("err").textContent = "";
+  document.getElementById("result").innerHTML = '<div class="loading">Running agent pipeline…</div>';
+  try {
+    const res = await fetch("/cases", {
+      method: "POST", headers: {"content-type": "application/json"},
+      body: JSON.stringify(buildClaim())
+    });
+    if (!res.ok) throw new Error("Server " + res.status + ": " + (await res.text()));
+    render(await res.json());
+  } catch (e) {
+    document.getElementById("result").innerHTML =
+      '<div class="empty">Could not run.</div>';
+    document.getElementById("err").textContent = e.message;
+  }
+}
+
+function render(d) {
+  const lvl = d.risk.risk_level;
+  const pct = Math.round(d.risk.risk_score * 100);
+  const human = d.requires_human
+    ? `<div class="human"><b>⏸ Human review required.</b> ${d.human_prompt}</div>`
+    : `<div class="human ok"><b>✓ No human needed.</b> Handled automatically.</div>`;
+  const li = a => a.map(x => `<li>${x}</li>`).join("");
+  const pills = a => a.map(x => `<span class="pill">${x}</span>`).join("") || '<span class="meta">none</span>';
+
+  document.getElementById("result").innerHTML = `
+    <div class="scorebar">
+      <div class="gauge g-${lvl}" style="--p:${pct}%"><span>${pct}</span></div>
+      <div>
+        <span class="badge lvl-${lvl}">${lvl.toUpperCase()} RISK</span>
+        <div class="meta" style="margin-top:8px">
+          Case <b>${d.case_id}</b> · claim <b>${d.claim_id}</b><br/>
+          route: <b>${d.review_path}</b> · status: <b>${d.status}</b><br/>
+          risk ${d.risk.risk_score} · anomaly ${d.risk.anomaly_score}
+        </div>
+      </div>
+    </div>
+    ${human}
+    <div class="sect"><h3>Why (supporting evidence)</h3><ul>${li(d.summary.supporting_evidence)}</ul></div>
+    <div class="sect"><h3>Recommended actions</h3><ul>${li(d.summary.recommended_actions)}</ul></div>
+    <div class="sect"><h3>Policy citations (RAG)</h3>${pills(d.summary.policy_citations.map(c => c.policy_id + " — " + c.title))}</div>
+    <div class="sect"><h3>Audit trail</h3><ul class="timeline">${li(d.audit_trail.map(a => a.step + ": " + a.detail))}</ul></div>
+  `;
+}
+</script>
+</body>
+</html>
