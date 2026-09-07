@@ -161,8 +161,8 @@ function retrievePolicies(factors, level, role){
     const words = new Set((POLICIES[pid][0]+" "+POLICIES[pid][1]).toLowerCase().match(/[a-z]+/g)||[]);
     let overlap=0; q.forEach(w=>{ if(words.has(w)) overlap++; });
     if(level==="high" && pid==="SIU-ESC-002") overlap+=5;
-    // PHI-handling policy is always relevant once a case touches member data
-    if((level==="high"||level==="medium") && pid==="SEC-PHI-003") overlap+=4;
+    // PHI-handling policy is always relevant — every case processes member data
+    if(pid==="SEC-PHI-003") overlap+=4;
     if(overlap>=2){
       // document-level access control: filter AFTER scoring so we can report what was withheld
       if(!allowed.includes(ACCESS[pid])) { withheld.push(pid); continue; }
