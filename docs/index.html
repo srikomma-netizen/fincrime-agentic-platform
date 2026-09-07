@@ -156,15 +156,21 @@ function levelFor(s){ return s<=0.35?"low":(s>=0.70?"high":"medium"); }
 function retrievePolicies(factors, level, role){
   const allowed = ROLE_ACCESS[role]||["all"];
   const q = new Set((factors.join(" ")+" "+level).toLowerCase().match(/[a-z]+/g)||[]);
-  const hits=[];
+  const hits=[]; const withheld=[];
   for(const pid in POLICIES){
-    if(!allowed.includes(ACCESS[pid])) continue;
     const words = new Set((POLICIES[pid][0]+" "+POLICIES[pid][1]).toLowerCase().match(/[a-z]+/g)||[]);
     let overlap=0; q.forEach(w=>{ if(words.has(w)) overlap++; });
     if(level==="high" && pid==="SIU-ESC-002") overlap+=5;
-    if(overlap>=2) hits.push({pid, title:POLICIES[pid][0], score:overlap});
+    // PHI-handling policy is always relevant once a case touches member data
+    if((level==="high"||level==="medium") && pid==="SEC-PHI-003") overlap+=4;
+    if(overlap>=2){
+      // document-level access control: filter AFTER scoring so we can report what was withheld
+      if(!allowed.includes(ACCESS[pid])) { withheld.push(pid); continue; }
+      hits.push({pid, title:POLICIES[pid][0], score:overlap});
+    }
   }
-  return hits.sort((a,b)=>b.score-a.score).slice(0,3);
+  hits.sort((a,b)=>b.score-a.score);
+  return { hits: hits.slice(0,4), withheld };
 }
 
 function plan(level){
@@ -190,8 +196,9 @@ function runTriage(){
   const { score, factors } = scoreRisk(c);
   const level = levelFor(score);
   audit.push("risk_agent: score "+score.toFixed(2)+" -> "+level);
-  const cites = retrievePolicies(factors, level, c.role);
-  audit.push("policy_agent: retrieved "+cites.length+" policy passage(s) for role "+c.role);
+  const { hits: cites, withheld } = retrievePolicies(factors, level, c.role);
+  audit.push("policy_agent: retrieved "+cites.length+" policy passage(s) for role "+c.role
+    + (withheld.length ? " ("+withheld.length+" restricted doc withheld by RBAC)" : ""));
   const [route, human, prompt, actions] = plan(level);
   audit.push("planner_agent: route "+route);
   if(human) audit.push("hitl: paused for human-in-the-loop approval");
@@ -217,7 +224,9 @@ function runTriage(){
     ${banner}
     <div class="sect"><h3>Why (supporting evidence)</h3><ul>${li(factors)}</ul></div>
     <div class="sect"><h3>Recommended actions</h3><ul>${li(actions)}</ul></div>
-    <div class="sect"><h3>Policy citations (RAG · role-filtered)</h3>${pills(cites.map(c=>c.pid+" — "+c.title))}</div>
+    <div class="sect"><h3>Policy citations (RAG · role-filtered)</h3>${pills(cites.map(c=>c.pid+" — "+c.title))}
+      ${withheld.length ? `<div class="meta" style="margin-top:8px;color:var(--amber)">&#128274; ${withheld.length} restricted policy withheld (${withheld.join(", ")}) — role <b>${c.role}</b> lacks clearance. Switch to <b>senior investigator</b> to see it.</div>` : ""}
+    </div>
     <div class="sect"><h3>Audit trail</h3><ul class="timeline">${li(audit)}</ul></div>`;
 }
 </script>
