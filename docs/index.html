@@ -57,6 +57,12 @@
   ul { margin: 0; padding-left: 18px; } li { margin: 4px 0; }
   .pill { display: inline-block; background: var(--panel2); border: 1px solid var(--line);
     padding: 3px 10px; border-radius: 999px; font-size: 12px; margin: 3px 4px 0 0; }
+  .pill.allowed { border-color: var(--green); color: var(--green); background: rgba(53,199,138,.10); }
+  .pill.locked { border-color: var(--red); color: var(--red); background: rgba(240,97,109,.12); }
+  .clearance { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 11px;
+    font-weight: 600; margin-left: 6px; }
+  .cl-analyst { background: rgba(240,180,41,.15); color: var(--amber); }
+  .cl-senior_investigator, .cl-compliance { background: rgba(53,199,138,.15); color: var(--green); }
   .timeline { list-style: none; padding: 0; }
   .timeline li { position: relative; padding: 4px 0 4px 20px; font-size: 13px; color: var(--muted); }
   .timeline li::before { content: ""; position: absolute; left: 4px; top: 11px; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
@@ -215,6 +221,7 @@ function runTriage(){
     <div class="scorebar">
       <div class="gauge g-${level}" style="--p:${pct}%"><span>${pct}</span></div>
       <div><span class="badge lvl-${level}">${level.toUpperCase()} RISK</span>
+        <span class="clearance cl-${c.role}">${c.role==="analyst"?"CLEARANCE: STANDARD":"CLEARANCE: ELEVATED"}</span>
         <div class="meta" style="margin-top:8px">
           Case <b>${caseId}</b> · claim <b>${c.claim_id}</b><br/>
           route: <b>${route}</b> · status: <b>${human?"awaiting_human":(level==="low"?"auto_cleared":"completed")}</b><br/>
@@ -224,8 +231,11 @@ function runTriage(){
     ${banner}
     <div class="sect"><h3>Why (supporting evidence)</h3><ul>${li(factors)}</ul></div>
     <div class="sect"><h3>Recommended actions</h3><ul>${li(actions)}</ul></div>
-    <div class="sect"><h3>Policy citations (RAG · role-filtered)</h3>${pills(cites.map(c=>c.pid+" — "+c.title))}
-      ${withheld.length ? `<div class="meta" style="margin-top:8px;color:var(--amber)">&#128274; ${withheld.length} restricted policy withheld (${withheld.join(", ")}) — role <b>${c.role}</b> lacks clearance. Switch to <b>senior investigator</b> to see it.</div>` : ""}
+    <div class="sect"><h3>Policy access &mdash; role-based (RBAC)</h3>
+      <div style="margin-bottom:6px" class="meta">Reviewer role: <b>${c.role}</b> &mdash; 🔓 = allowed, 🔒 = blocked for this clearance</div>
+      ${cites.map(x=>`<span class="pill allowed">🔓 ${x.pid} — ${x.title}</span>`).join("")}
+      ${withheld.map(pid=>`<span class="pill locked">🔒 ${pid} — restricted (needs senior investigator)</span>`).join("")}
+      ${(!cites.length && !withheld.length) ? '<span class="meta">no policy matched this case</span>' : ""}
     </div>
     <div class="sect"><h3>Audit trail</h3><ul class="timeline">${li(audit)}</ul></div>`;
 }
